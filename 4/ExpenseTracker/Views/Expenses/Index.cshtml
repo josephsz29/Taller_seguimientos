@@ -1,0 +1,104 @@
+@model ExpenseIndexViewModel
+@{
+    ViewData["Title"] = "Gastos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Mis gastos</h2>
+
+    <!-- Selector de mes -->
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="month" name="month" value="@Model.MonthValue" class="form-control" />
+        <button type="submit" class="btn btn-outline-secondary">Ver</button>
+    </form>
+</div>
+
+<!-- Formulario para registrar un gasto -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Registrar gasto</h5>
+
+        <form asp-action="Create" method="post">
+            <input type="hidden" name="month" value="@Model.MonthValue" />
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Form.Description" class="form-label"></label>
+                    <input asp-for="Form.Description" class="form-control" maxlength="200" placeholder="Ej: Almuerzo" />
+                    <span asp-validation-for="Form.Description" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="Form.Amount" class="form-label"></label>
+                    <input asp-for="Form.Amount" type="number" step="0.01" min="0" class="form-control" placeholder="0.00" />
+                    <span asp-validation-for="Form.Amount" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Form.Date" class="form-label"></label>
+                    <input asp-for="Form.Date" type="date" class="form-control" />
+                    <span asp-validation-for="Form.Date" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Form.CategoryId" class="form-label"></label>
+                    <select asp-for="Form.CategoryId" asp-items="Model.Categories" class="form-select">
+                        <option value="0">Selecciona...</option>
+                    </select>
+                    <span asp-validation-for="Form.CategoryId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Agregar gasto</button>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de gastos del mes -->
+<h4 class="mb-3 text-capitalize">Gastos de @Model.MonthLabel</h4>
+
+@if (!Model.Expenses.Any())
+{
+    <p class="text-muted">No hay gastos registrados en este mes.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th class="text-end">Monto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var expense in Model.Expenses)
+                {
+                    <tr>
+                        <td>@expense.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@expense.Description</td>
+                        <td><span class="badge text-bg-secondary">@expense.Category.Name</span></td>
+                        <td class="text-end">$@expense.Amount.ToString("N2")</td>
+                        <td class="text-end">
+                            <form asp-action="Delete" asp-route-id="@expense.Id" method="post"
+                                  onsubmit="return confirm('¿Eliminar este gasto?');">
+                                <input type="hidden" name="month" value="@Model.MonthValue" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Total del mes</th>
+                    <th class="text-end">$@Model.MonthTotal.ToString("N2")</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}

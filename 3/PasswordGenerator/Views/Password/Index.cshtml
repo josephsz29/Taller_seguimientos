@@ -1,0 +1,130 @@
+@model PasswordViewModel
+@{
+    ViewData["Title"] = "Generar contraseña";
+
+    // Funciones auxiliares para mostrar la fortaleza en español
+    string StrengthLabel(PasswordStrength strength) => strength switch
+    {
+        PasswordStrength.Weak => "Débil",
+        PasswordStrength.Medium => "Media",
+        _ => "Fuerte"
+    };
+
+    string StrengthClass(PasswordStrength strength) => strength switch
+    {
+        PasswordStrength.Weak => "bg-danger",
+        PasswordStrength.Medium => "bg-warning text-dark",
+        _ => "bg-success"
+    };
+}
+
+<h2 class="mb-4">Generar contraseña</h2>
+
+<form asp-action="Index" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="Length" class="form-label">Longitud: <strong id="lengthValue">@Model.Length</strong></label>
+        <input asp-for="Length" type="range" min="4" max="64" class="form-range"
+               oninput="document.getElementById('lengthValue').textContent = this.value" />
+        <span asp-validation-for="Length" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-check">
+            <input asp-for="IncludeUppercase" class="form-check-input" />
+            <label asp-for="IncludeUppercase" class="form-check-label"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="IncludeLowercase" class="form-check-input" />
+            <label asp-for="IncludeLowercase" class="form-check-label"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="IncludeDigits" class="form-check-input" />
+            <label asp-for="IncludeDigits" class="form-check-label"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="IncludeSymbols" class="form-check-input" />
+            <label asp-for="IncludeSymbols" class="form-check-label"></label>
+        </div>
+        <div class="form-check mt-2">
+            <input asp-for="ExcludeAmbiguous" class="form-check-input" />
+            <label asp-for="ExcludeAmbiguous" class="form-check-label"></label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Generar</button>
+</form>
+
+<!-- La contraseña solo se muestra después de generarla -->
+@if (Model.Result != null)
+{
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Tu contraseña</h5>
+
+            <div class="input-group mb-3">
+                <input id="passwordOutput" type="text" class="form-control font-monospace"
+                       value="@Model.Result.Password" readonly />
+                <button id="copyButton" type="button" class="btn btn-outline-secondary" onclick="copyPassword()">Copiar</button>
+            </div>
+
+            <span class="badge @StrengthClass(Model.Result.Strength)">Fortaleza: @StrengthLabel(Model.Result.Strength)</span>
+            <small class="text-muted ms-2">@Model.Result.EntropyBits.ToString("0") bits de entropía</small>
+        </div>
+    </div>
+}
+
+<!-- Historial guardado en la base de datos (sin las contraseñas) -->
+<h4 class="mt-5">Historial reciente</h4>
+<p class="text-muted small">Solo se guardan las opciones usadas, nunca las contraseñas.</p>
+
+@if (!Model.History.Any())
+{
+    <p class="text-muted">Aún no hay generaciones guardadas.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th class="text-end">Longitud</th>
+                    <th>Tipos</th>
+                    <th>Fortaleza</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var record in Model.History)
+                {
+                    var types = new List<string>();
+                    if (record.IncludeUppercase) types.Add("A-Z");
+                    if (record.IncludeLowercase) types.Add("a-z");
+                    if (record.IncludeDigits) types.Add("0-9");
+                    if (record.IncludeSymbols) types.Add("#$%");
+
+                    <tr>
+                        <td>@record.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end">@record.Length</td>
+                        <td>@string.Join(" ", types)</td>
+                        <td><span class="badge @StrengthClass(record.Strength)">@StrengthLabel(record.Strength)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<script>
+    // Copia la contraseña al portapapeles y avisa brevemente en el botón
+    function copyPassword() {
+        const input = document.getElementById('passwordOutput');
+        const button = document.getElementById('copyButton');
+
+        navigator.clipboard.writeText(input.value).then(function () {
+            button.textContent = '¡Copiada!';
+            setTimeout(function () { button.textContent = 'Copiar'; }, 1500);
+        });
+    }
+</script>
