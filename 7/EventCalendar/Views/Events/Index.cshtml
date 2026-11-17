@@ -1,0 +1,114 @@
+@using System.Globalization
+@model CalendarIndexViewModel
+@{
+    ViewData["Title"] = "Calendario";
+    var colombia = new CultureInfo("es-CO");
+    var dayNames = new[] { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <!-- Navegación entre meses -->
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" asp-route-month="@Model.Month.PreviousMonthValue"
+           class="btn btn-outline-secondary btn-sm">&laquo;</a>
+        <h2 class="mb-0 text-capitalize">@Model.Month.Label</h2>
+        <a asp-action="Index" asp-route-month="@Model.Month.NextMonthValue"
+           class="btn btn-outline-secondary btn-sm">&raquo;</a>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm">Hoy</a>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">Nuevo evento</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<!-- Cuadrícula del mes: clic en el número del día para agregar un evento, clic en un evento para editarlo -->
+<div class="table-responsive">
+    <table class="table table-bordered mb-4" style="table-layout: fixed; min-width: 700px;">
+        <thead>
+            <tr>
+                @foreach (var name in dayNames)
+                {
+                    <th class="text-center">@name</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (int week = 0; week < 6; week++)
+            {
+                <tr>
+                    @foreach (var day in Model.Month.Days.Skip(week * 7).Take(7))
+                    {
+                        var cellClass = day.IsCurrentMonth ? "" : "bg-light text-muted";
+
+                        <td class="@cellClass" style="height: 110px; vertical-align: top;">
+                            <div class="mb-1">
+                                <a asp-action="Create" asp-route-date="@day.DateValue" class="text-decoration-none">
+                                    @if (day.IsToday)
+                                    {
+                                        <span class="badge rounded-pill text-bg-primary">@day.Date.Day</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@day.Date.Day</span>
+                                    }
+                                </a>
+                            </div>
+
+                            @foreach (var item in day.Events)
+                            {
+                                var badgeClass = item.EndTime < DateTime.Now ? "text-bg-secondary" : "text-bg-primary";
+
+                                <a asp-action="Edit" asp-route-id="@item.Id"
+                                   class="badge @badgeClass d-block text-start text-truncate mb-1 text-decoration-none"
+                                   title="@item.Title">
+                                    @item.StartTime.ToString("HH:mm") @item.Title
+                                    @if (item.ReminderMinutes.HasValue)
+                                    {
+                                        <span>&#128276;</span>
+                                    }
+                                </a>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Próximos eventos -->
+<h4 class="mb-3">Próximos eventos</h4>
+
+@if (!Model.Upcoming.Any())
+{
+    <p class="text-muted">No tienes eventos próximos.</p>
+}
+else
+{
+    <ul class="list-group mb-4">
+        @foreach (var item in Model.Upcoming)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.Title</a>
+                    <div class="small text-muted text-capitalize">
+                        @item.StartTime.ToString("dddd d 'de' MMMM, HH:mm", colombia) - @item.EndTime.ToString("HH:mm")
+                    </div>
+                    @if (!string.IsNullOrEmpty(item.Description))
+                    {
+                        <div class="small">@item.Description</div>
+                    }
+                </div>
+
+                @if (item.ReminderMinutes.HasValue)
+                {
+                    <span class="badge text-bg-warning">&#128276; @ReminderOptions.GetLabel(item.ReminderMinutes)</span>
+                }
+            </li>
+        }
+    </ul>
+}

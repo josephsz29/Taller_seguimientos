@@ -1,0 +1,71 @@
+@model EventFormViewModel
+@{
+    // La misma vista sirve para crear (Id = 0) y para editar
+    var isNew = Model.Id == 0;
+    var formAction = isNew ? "Create" : "Edit";
+    ViewData["Title"] = isNew ? "Nuevo evento" : "Editar evento";
+}
+
+<a asp-action="Index" asp-route-month="@Model.MonthValue" class="text-decoration-none">&larr; Volver al calendario</a>
+
+<h2 class="mt-2 mb-4">@ViewData["Title"]</h2>
+
+<form asp-action="@formAction" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" maxlength="100" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <label asp-for="StartTime" class="form-label"></label>
+            <input type="datetime-local" id="StartTime" name="StartTime" value="@Model.StartValue"
+                   class="form-control" required />
+            <span asp-validation-for="StartTime" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="EndTime" class="form-label"></label>
+            <input type="datetime-local" id="EndTime" name="EndTime" value="@Model.EndValue"
+                   class="form-control" required />
+            <span asp-validation-for="EndTime" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReminderMinutes" class="form-label"></label>
+        <select asp-for="ReminderMinutes" class="form-select">
+            @foreach (var option in ReminderOptions.All)
+            {
+                <option value="@option.Minutes" selected="@(Model.ReminderMinutes == option.Minutes)">@option.Label</option>
+            }
+        </select>
+        <span asp-validation-for="ReminderMinutes" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-action="Index" asp-route-month="@Model.MonthValue" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@if (!isNew)
+{
+    <!-- Formulario aparte para eliminar (no se pueden anidar formularios) -->
+    <hr class="my-4" />
+
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+          onsubmit="return confirm('¿Eliminar este evento?');">
+        <input type="hidden" name="month" value="@Model.MonthValue" />
+        <button type="submit" class="btn btn-outline-danger">Eliminar evento</button>
+    </form>
+}

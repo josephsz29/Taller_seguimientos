@@ -1,0 +1,122 @@
+@using System.Globalization
+@model Booking
+@{
+    ViewData["Title"] = "Tu reserva";
+    var colombia = CultureInfo.GetCultureInfo("es-CO");
+    var dateLabel = Model.StartTime.ToString("dddd d 'de' MMMM 'de' yyyy", colombia);
+    var timeLabel = Model.StartTime.ToString("HH:mm") + " - " + Model.EndTime.ToString("HH:mm");
+    var holdUntil = Model.CreatedAt.AddMinutes(BookingRules.PendingHoldMinutes);
+
+    // Funciones auxiliares para mostrar el estado en español
+    string StatusLabel(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "Pendiente de confirmación",
+        BookingStatus.Confirmed => "Confirmada",
+        _ => "Cancelada"
+    };
+
+    string StatusClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "text-bg-warning",
+        BookingStatus.Confirmed => "text-bg-success",
+        _ => "text-bg-secondary"
+    };
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<h2 class="mb-4">Tu reserva</h2>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <div class="text-muted">Código de reserva</div>
+                <div class="fs-3 fw-bold font-monospace">@Model.Code</div>
+            </div>
+            <span class="badge @StatusClass(Model.Status)">@StatusLabel(Model.Status)</span>
+        </div>
+
+        <ul class="list-group list-group-flush mb-3">
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Servicio</span><strong>@Model.Service.Name</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Fecha</span><strong class="text-capitalize">@dateLabel</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Hora</span><strong>@timeLabel</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Precio</span><strong>$@Model.Service.Price.ToString("N0", colombia)</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Nombre</span><strong>@Model.CustomerName</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Correo</span><strong>@Model.CustomerEmail</strong>
+            </li>
+            @if (!string.IsNullOrEmpty(Model.CustomerPhone))
+            {
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Teléfono</span><strong>@Model.CustomerPhone</strong>
+                </li>
+            }
+        </ul>
+
+        @if (Model.Status == BookingStatus.Pending)
+        {
+            <div class="alert alert-info">
+                @if (DateTime.Now <= holdUntil)
+                {
+                    <span>Tu horario está apartado hasta las <strong>@holdUntil.ToString("HH:mm")</strong>. Confirma tu reserva para asegurarlo.</span>
+                }
+                else
+                {
+                    <span>El tiempo de espera venció. Aún puedes intentar confirmar si el horario sigue libre.</span>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <form asp-action="Confirm" method="post">
+                    <input type="hidden" name="code" value="@Model.Code" />
+                    <button type="submit" class="btn btn-success">Confirmar reserva</button>
+                </form>
+
+                <form asp-action="Cancel" method="post"
+                      onsubmit="return confirm('¿Cancelar esta reserva?');">
+                    <input type="hidden" name="code" value="@Model.Code" />
+                    <button type="submit" class="btn btn-outline-danger">Cancelar</button>
+                </form>
+            </div>
+        }
+        else if (Model.Status == BookingStatus.Confirmed)
+        {
+            <div class="alert alert-success">
+                Tu reserva está confirmada. Guarda tu código para consultarla o cancelarla cuando quieras.
+            </div>
+
+            <form asp-action="Cancel" method="post"
+                  onsubmit="return confirm('¿Cancelar esta reserva?');">
+                <input type="hidden" name="code" value="@Model.Code" />
+                <button type="submit" class="btn btn-outline-danger">Cancelar reserva</button>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-secondary mb-0">Esta reserva fue cancelada y el horario quedó libre.</div>
+        }
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">Hacer otra reserva</a>
+</div>

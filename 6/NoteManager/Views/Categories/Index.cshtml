@@ -1,0 +1,57 @@
+@model CategoryIndexViewModel
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<h2 class="mb-4">Categorías</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- Formulario para agregar una categoría -->
+<form asp-action="Create" method="post" class="mb-4">
+    <label asp-for="Name" class="form-label"></label>
+    <div class="d-flex gap-2">
+        <input asp-for="Name" class="form-control" maxlength="50" placeholder="Ej: Recetas" />
+        <button type="submit" class="btn btn-primary">Agregar</button>
+    </div>
+    <span asp-validation-for="Name" class="text-danger"></span>
+</form>
+
+<!-- Lista de categorías con la cantidad de notas -->
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th class="text-end">Notas</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var category in Model.Categories)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Notes" asp-action="Index" asp-route-categoryId="@category.Id"
+                           class="text-decoration-none">@category.Name</a>
+                    </td>
+                    <td class="text-end">@category.NoteCount</td>
+                    <td class="text-end">
+                        <form asp-action="Delete" asp-route-id="@category.Id" method="post"
+                              onsubmit="return confirm('¿Eliminar esta categoría?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

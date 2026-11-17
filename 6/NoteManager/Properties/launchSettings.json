@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "NoteManager": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7600;http://localhost:5600",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

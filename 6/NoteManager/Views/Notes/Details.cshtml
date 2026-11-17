@@ -1,0 +1,41 @@
+@model Note
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<a asp-action="Index" class="text-decoration-none">&larr; Todas las notas</a>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h2 class="mb-0">@Model.Title</h2>
+            <span class="badge text-bg-secondary">@Model.Category.Name</span>
+        </div>
+
+        <!-- pre-wrap respeta los saltos de línea que escribió el usuario; Razor escapa el HTML automáticamente -->
+        <p style="white-space: pre-wrap;">@Model.Content</p>
+
+        <hr />
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Creada: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm") ·
+                Modificada: @Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+            </small>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('¿Eliminar esta nota?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,55 @@
+@model SlotsViewModel
+@{
+    ViewData["Title"] = "Horarios";
+}
+
+<a asp-action="Index" class="text-decoration-none">&larr; Servicios</a>
+
+<h2 class="mt-2 mb-0">@Model.Service.Name</h2>
+<p class="text-muted">@Model.Service.DurationMinutes minutos</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- Selector de fecha -->
+<form asp-action="Slots" method="get" class="d-flex gap-2 mb-4">
+    <input type="hidden" name="serviceId" value="@Model.Service.Id" />
+    <input type="date" name="date" value="@Model.DateValue" min="@Model.MinDateValue"
+           class="form-control" style="max-width: 220px;" />
+    <button type="submit" class="btn btn-outline-secondary">Ver horarios</button>
+</form>
+
+<h5 class="text-capitalize mb-3">@Model.DateLabel</h5>
+
+@if (!Model.IsBusinessDay)
+{
+    <div class="alert alert-info">
+        No atendemos los fines de semana. Elige un día de lunes a viernes.
+    </div>
+}
+else if (!Model.Slots.Any(s => s.IsAvailable))
+{
+    <div class="alert alert-warning">No quedan horarios disponibles para este día. Prueba con otra fecha.</div>
+}
+
+@if (Model.Slots.Any())
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        @foreach (var slot in Model.Slots)
+        {
+            if (slot.IsAvailable)
+            {
+                <a asp-action="Create" asp-route-serviceId="@Model.Service.Id" asp-route-start="@slot.StartValue"
+                   class="btn btn-outline-primary">@slot.Label</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-secondary" disabled>@slot.Label</button>
+            }
+        }
+    </div>
+
+    <p class="text-muted small">Los horarios deshabilitados ya están ocupados o ya pasaron.</p>
+}

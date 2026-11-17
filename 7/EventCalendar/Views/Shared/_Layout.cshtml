@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Calendario de Eventos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+</head>
+<body>
+    <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Events" asp-action="Index">Calendario de Eventos</a>
+
+            <!-- Solo aparece si el navegador soporta notificaciones y aún no se ha decidido -->
+            <button id="notifyButton" type="button" class="btn btn-sm btn-outline-light d-none">
+                Activar avisos del navegador
+            </button>
+        </div>
+    </nav>
+
+    <main class="container" style="max-width: 1000px;">
+        @RenderBody()
+    </main>
+
+    <!-- Aquí se dibujan los recordatorios que van llegando -->
+    <div id="reminderContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080; max-width: 380px;"></div>
+
+    <!-- Token antiforgery que el JavaScript envía al cerrar un recordatorio -->
+    <form id="csrfForm" class="d-none">@Html.AntiForgeryToken()</form>
+
+    <script>
+        (function () {
+            const dueUrl = '@Url.Action("Due", "Reminders")';
+            const dismissUrl = '@Url.Action("Dismiss", "Reminders")';
+            const pollIntervalMs = 30000;
+
+            const container = document.getElementById('reminderContainer');
+            const notifyButton = document.getElementById('notifyButton');
+            const shownIds = new Set();
+
+            // Cierra el recordatorio en el servidor para que no vuelva a aparecer
+            function dismissReminder(id) {
+                const token = document.querySelector('#csrfForm input[name="__RequestVerificationToken"]').value;
+
+                return fetch(dismissUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: 'id=' + encodeURIComponent(id)
+                });
+            }
+
+            // Notificación del navegador (una sola vez por recordatorio en esta sesión)
+            function showBrowserNotification(reminder) {
+                if (!('Notification' in window) || Notification.permission !== 'granted') {
+                    return;
+                }
+
+                const notified = JSON.parse(sessionStorage.getItem('notifiedReminders') || '[]');
+                if (notified.includes(reminder.id)) {
+                    return;
+                }
+
+                notified.push(reminder.id);
+                sessionStorage.setItem('notifiedReminders', JSON.stringify(notified));
+
+                new Notification('Recordatorio: ' + reminder.title, {
+                    body: 'Empieza en ' + reminder.minutesLeft + ' min (' + reminder.startTime + ')'
+                });
+            }
+
+            // Dibuja el aviso dentro de la página (textContent evita inyectar HTML)
+            function showReminder(reminder) {
+                if (shownIds.has(reminder.id)) {
+                    return;
+                }
+                shownIds.add(reminder.id);
+
+                const box = document.createElement('div');
+                box.className = 'alert alert-warning shadow mb-2';
+
+                const title = document.createElement('strong');
+                title.textContent = 'Recordatorio: ' + reminder.title;
+
+                const detail = document.createElement('div');
+                detail.className = 'small mb-2';
+                detail.textContent = 'Empieza en ' + reminder.minutesLeft + ' min (' + reminder.startTime + ')';
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-sm btn-dark';
+                button.textContent = 'Entendido';
+                button.addEventListener('click', function () {
+                    dismissReminder(reminder.id).then(function () {
+                        box.remove();
+                    });
+                });
+
+                box.appendChild(title);
+                box.appendChild(detail);
+                box.appendChild(button);
+                container.appendChild(box);
+
+                showBrowserNotification(reminder);
+            }
+
+            // Pregunta al servidor si hay recordatorios pendientes
+            function checkReminders() {
+                fetch(dueUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.ok ? response.json() : []; })
+                    .then(function (reminders) { reminders.forEach(showReminder); })
+                    .catch(function () { /* si falla, se intenta de nuevo en el siguiente ciclo */ });
+            }
+
+            // Botón para pedir permiso de notificaciones del navegador
+            if ('Notification' in window && Notification.permission === 'default') {
+                notifyButton.classList.remove('d-none');
+                notifyButton.addEventListener('click', function () {
+                    Notification.requestPermission().then(function () {
+                        notifyButton.classList.add('d-none');
+                    });
+                });
+            }
+
+            checkReminders();
+            setInterval(checkReminders, pollIntervalMs);
+        })();
+    </script>
+</body>
+</html>

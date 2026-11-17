@@ -1,0 +1,55 @@
+@using System.Globalization
+@model BookingFormViewModel
+@{
+    ViewData["Title"] = "Datos de la reserva";
+    var service = Model.Service!;
+    var colombia = CultureInfo.GetCultureInfo("es-CO");
+}
+
+<a asp-action="Slots" asp-route-serviceId="@service.Id" asp-route-date="@Model.DateValue"
+   class="text-decoration-none">&larr; Cambiar horario</a>
+
+<h2 class="mt-2 mb-4">Tus datos</h2>
+
+<!-- Resumen de lo que se va a reservar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">@service.Name</h5>
+        <ul class="list-unstyled mb-0">
+            <li><strong>Fecha:</strong> <span class="text-capitalize">@Model.DateLabel</span></li>
+            <li><strong>Hora:</strong> @Model.TimeLabel</li>
+            <li><strong>Duración:</strong> @service.DurationMinutes minutos</li>
+            <li><strong>Precio:</strong> $@service.Price.ToString("N0", colombia)</li>
+        </ul>
+    </div>
+</div>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="ServiceId" value="@Model.ServiceId" />
+    <input type="hidden" name="StartTime" value="@Model.StartValue" />
+
+    <div class="mb-3">
+        <label asp-for="CustomerName" class="form-label"></label>
+        <input asp-for="CustomerName" class="form-control" maxlength="100" />
+        <span asp-validation-for="CustomerName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CustomerEmail" class="form-label"></label>
+        <input asp-for="CustomerEmail" type="email" class="form-control" maxlength="150" />
+        <span asp-validation-for="CustomerEmail" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CustomerPhone" class="form-label"></label>
+        <input asp-for="CustomerPhone" type="tel" class="form-control" maxlength="30" />
+        <span asp-validation-for="CustomerPhone" class="text-danger"></span>
+    </div>
+
+    <p class="text-muted small">
+        Al continuar, el horario queda apartado durante @BookingRules.PendingHoldMinutes minutos
+        mientras confirmas tu reserva.
+    </p>
+
+    <button type="submit" class="btn btn-primary w-100">Continuar</button>
+</form>

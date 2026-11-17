@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "EventCalendar": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7700;http://localhost:5700",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 namespace PasswordGenerator.Models
 {
-    // Historial de generaciones. Por seguridad NO se guarda la contraseña,
+    // Historial de generaciones. Por seguridad no se guarda la contraseña,
     // solo las opciones con las que se generó.
     public class PasswordRecord
     {
