@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "RecipeHub": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7800;http://localhost:5800",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

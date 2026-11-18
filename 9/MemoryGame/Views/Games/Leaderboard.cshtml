@@ -1,0 +1,60 @@
+@model LeaderboardViewModel
+@{
+    ViewData["Title"] = "Ranking";
+}
+
+<h2 class="mb-4">Ranking</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<!-- Un ranking por nivel -->
+<ul class="nav nav-pills mb-4">
+    @foreach (var setting in DifficultySettings.All)
+    {
+        var linkClass = setting.Difficulty == Model.Difficulty ? "nav-link active" : "nav-link";
+
+        <li class="nav-item">
+            <a class="@linkClass" asp-action="Leaderboard" asp-route-difficulty="@setting.Difficulty">@setting.Label</a>
+        </li>
+    }
+</ul>
+
+@if (!Model.Entries.Any())
+{
+    <p class="text-muted">Todavía no hay puntajes en este nivel. <a asp-action="Index">¡Sé el primero!</a></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Jugador</th>
+                    <th class="text-end">Puntaje</th>
+                    <th class="text-end">Movimientos</th>
+                    <th class="text-end">Tiempo</th>
+                    <th class="text-end">Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Entries.Count; i++)
+                {
+                    var entry = Model.Entries[i];
+
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@entry.PlayerName</td>
+                        <td class="text-end"><strong>@entry.Score</strong></td>
+                        <td class="text-end">@entry.Moves</td>
+                        <td class="text-end">@entry.DurationLabel</td>
+                        <td class="text-end">@entry.FinishedAt?.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

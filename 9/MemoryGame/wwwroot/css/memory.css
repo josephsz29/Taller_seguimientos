@@ -1,0 +1,70 @@
+/* Tablero de cartas */
+.memory-board {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0 auto;
+}
+
+/* Cada carta es un botón con dos caras que giran */
+.memory-card {
+    perspective: 600px;
+    border: 0;
+    background: none;
+    padding: 0;
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+}
+
+.memory-card-inner {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s;
+    transform-style: preserve-3d;
+}
+
+.memory-card.revealed .memory-card-inner {
+    transform: rotateY(180deg);
+}
+
+.memory-card-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    font-size: clamp(1.6rem, 6vw, 2.6rem);
+    user-select: none;
+}
+
+/* Dorso de la carta (boca abajo) */
+.memory-card-front {
+    background: #0d6efd;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Cara con la imagen (boca arriba) */
+.memory-card-back {
+    background: #fff;
+    border: 2px solid #dee2e6;
+    transform: rotateY(180deg);
+}
+
+.memory-card.matched .memory-card-back {
+    background: #d1e7dd;
+    border-color: #198754;
+}
+
+.memory-card:not(.revealed):hover .memory-card-front {
+    background: #0b5ed7;
+}
+
+.memory-card.revealed,
+.memory-card.matched {
+    cursor: default;
+}

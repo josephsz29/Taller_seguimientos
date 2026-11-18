@@ -1,0 +1,12 @@
+@model Recipe
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<!-- Vista pública de solo lectura: sin botones para editar ni eliminar -->
+<div class="alert alert-info">
+    Alguien compartió esta receta contigo.
+    <a asp-action="Index" class="alert-link">Ver más recetas</a>
+</div>
+
+<partial name="_RecipeContent" model="Model" />

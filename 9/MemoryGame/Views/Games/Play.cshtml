@@ -1,0 +1,91 @@
+@model GameBoardViewModel
+@{
+    ViewData["Title"] = "Jugar";
+
+    // Estilo del tablero según las columnas del nivel
+    var boardStyle = "grid-template-columns: repeat(" + Model.Columns + ", 1fr); max-width: " + (Model.Columns * 110) + "px;";
+    var startedValue = Model.IsStarted ? "true" : "false";
+    var finishedValue = Model.IsFinished ? "true" : "false";
+    var resultPanelClass = Model.IsFinished ? "card border-success mt-4" : "card border-success mt-4 d-none";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Nivel @Model.DifficultyLabel</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Cambiar nivel</a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- Marcadores -->
+<div class="d-flex flex-wrap gap-4 mb-2 fs-5">
+    <div>Movimientos: <strong id="movesLabel">@Model.Moves</strong></div>
+    <div>Parejas: <strong id="pairsLabel">@Model.MatchedPairs</strong> / @Model.TotalPairs</div>
+    <div>Tiempo: <strong id="timeLabel">00:00</strong></div>
+</div>
+
+<div id="gameMessage" class="text-danger small mb-2"></div>
+
+<!-- Tablero: el símbolo solo viene escrito en las cartas ya reveladas -->
+<div id="board" class="memory-board" style="@boardStyle"
+     data-flip-url="@Url.Action("Flip", "Games")"
+     data-game-id="@Model.GameId"
+     data-total-pairs="@Model.TotalPairs"
+     data-elapsed="@Model.ElapsedSeconds"
+     data-started="@startedValue"
+     data-finished="@finishedValue">
+    @foreach (var card in Model.Cards)
+    {
+        var cardClass = "memory-card";
+        if (card.IsRevealed) { cardClass += " revealed"; }
+        if (card.IsMatched) { cardClass += " matched"; }
+
+        <button type="button" class="@cardClass" data-index="@card.Index" aria-label="Carta @(card.Index + 1)">
+            <span class="memory-card-inner">
+                <span class="memory-card-face memory-card-front">?</span>
+                <span class="memory-card-face memory-card-back">@card.Symbol</span>
+            </span>
+        </button>
+    }
+</div>
+
+<!-- Resultado: aparece al terminar la partida -->
+<div id="resultPanel" class="@resultPanelClass">
+    <div class="card-body">
+        <h4 class="text-success">¡Completaste el juego!</h4>
+
+        <ul class="list-unstyled mb-3">
+            <li>Puntaje: <strong id="scoreLabel">@Model.Score</strong></li>
+            <li>Movimientos: <strong id="finalMovesLabel">@Model.Moves</strong></li>
+            <li>Tiempo: <strong id="finalTimeLabel">@Model.DurationLabel</strong></li>
+        </ul>
+
+        @if (Model.IsSaved)
+        {
+            <p>
+                Puntaje guardado como <strong>@Model.PlayerName</strong>.
+                <a asp-action="Leaderboard" asp-route-difficulty="@Model.Difficulty">Ver ranking</a>
+            </p>
+        }
+        else
+        {
+            <form asp-action="SaveScore" method="post" class="d-flex gap-2 mb-3">
+                <input type="hidden" name="id" value="@Model.GameId" />
+                <input type="text" name="playerName" class="form-control" placeholder="Tu nombre" maxlength="30" required />
+                <button type="submit" class="btn btn-success">Guardar puntaje</button>
+            </form>
+        }
+
+        <form asp-action="Start" method="post">
+            <input type="hidden" name="difficulty" value="@Model.Difficulty" />
+            <button type="submit" class="btn btn-primary">Jugar de nuevo</button>
+        </form>
+    </div>
+</div>
+
+<!-- Token antiforgery que el JavaScript envía en cada petición -->
+<form id="csrfForm" class="d-none">@Html.AntiForgeryToken()</form>
+
+<script src="~/js/memory.js"></script>

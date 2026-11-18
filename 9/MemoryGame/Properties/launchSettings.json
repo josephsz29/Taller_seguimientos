@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "MemoryGame": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7900;http://localhost:5900",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

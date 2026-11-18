@@ -1,0 +1,63 @@
+@model Recipe
+@{
+    ViewData["Title"] = Model.Title;
+
+    // Enlace completo para compartir, por ejemplo https://localhost:7800/Recipes/Shared?code=AB12CD34
+    var shareUrl = Url.Action("Shared", "Recipes", new { code = Model.ShareCode }, Context.Request.Scheme);
+    var returnUrl = Context.Request.Path.Value + Context.Request.QueryString.Value;
+}
+
+<a asp-action="Index" class="text-decoration-none">&larr; Todas las recetas</a>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+
+<div class="mt-3">
+    <partial name="_RecipeContent" model="Model" />
+</div>
+
+<!-- Compartir -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Compartir esta receta</h6>
+
+        <div class="input-group">
+            <input id="shareUrl" type="text" class="form-control" value="@shareUrl" readonly />
+            <button id="copyButton" type="button" class="btn btn-outline-secondary" onclick="copyShareUrl()">Copiar enlace</button>
+        </div>
+
+        <div class="form-text">Cualquiera que tenga este enlace podrá ver la receta (solo lectura).</div>
+    </div>
+</div>
+
+<!-- Acciones -->
+<div class="d-flex gap-2 mt-4">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Editar</a>
+
+    <form asp-action="ToggleFavorite" asp-route-id="@Model.Id" method="post">
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit" class="btn btn-outline-warning">
+            @(Model.IsFavorite ? "Quitar de favoritas" : "Guardar en favoritas")
+        </button>
+    </form>
+
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+          onsubmit="return confirm('¿Eliminar esta receta?');">
+        <button type="submit" class="btn btn-outline-danger">Eliminar</button>
+    </form>
+</div>
+
+<script>
+    // Copia el enlace al portapapeles y avisa brevemente en el botón
+    function copyShareUrl() {
+        const input = document.getElementById('shareUrl');
+        const button = document.getElementById('copyButton');
+
+        navigator.clipboard.writeText(input.value).then(function () {
+            button.textContent = '¡Copiado!';
+            setTimeout(function () { button.textContent = 'Copiar enlace'; }, 1500);
+        });
+    }
+</script>
