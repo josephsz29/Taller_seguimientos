@@ -1,0 +1,144 @@
+@model SurveyResults
+@{
+    ViewData["Title"] = "Resultados";
+}
+
+<!-- d-print-none: estos botones no aparecen al imprimir el informe -->
+<div class="d-print-none">
+    <a asp-action="Builder" asp-route-id="@Model.Survey.Id" class="text-decoration-none">&larr; Volver a la encuesta</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mt-2 mb-4">
+    <div>
+        <h2 class="mb-1">@Model.Survey.Title</h2>
+        <p class="text-muted mb-0">Informe de resultados · @Model.TotalResponses respuesta(s)</p>
+    </div>
+
+    <div class="d-flex gap-2 d-print-none">
+        <a asp-action="ExportCsv" asp-route-id="@Model.Survey.Id" class="btn btn-outline-success">Descargar CSV (Excel)</a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Imprimir / guardar PDF</button>
+    </div>
+</div>
+
+@if (Model.TotalResponses == 0)
+{
+    <div class="alert alert-info">Todavía no hay respuestas. Comparte el enlace de la encuesta para empezar a recibirlas.</div>
+}
+else if (!Model.Questions.Any())
+{
+    <p class="text-muted">Esta encuesta no tiene preguntas.</p>
+}
+else
+{
+    @for (int i = 0; i < Model.Questions.Count; i++)
+    {
+        var question = Model.Questions[i];
+
+        <!-- break-inside: avoid evita que una pregunta se corte entre dos páginas al imprimir -->
+        <div class="card mb-4" style="break-inside: avoid;">
+            <div class="card-body">
+                <h5 class="card-title">@(i + 1). @question.Text</h5>
+                <p class="text-muted small">
+                    @question.Type.ToLabel() · @question.AnsweredCount persona(s) respondieron
+                </p>
+
+                @if (question.Type == QuestionType.Text)
+                {
+                    @if (!question.TextAnswers.Any())
+                    {
+                        <p class="text-muted mb-0">Sin respuestas.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var answer in question.TextAnswers)
+                            {
+                                <li class="list-group-item" style="white-space: pre-wrap;">@answer</li>
+                            }
+                        </ul>
+                    }
+                }
+                else
+                {
+                    @if (question.Type == QuestionType.Rating && question.RatingAverage.HasValue)
+                    {
+                        <p class="fs-5">
+                            Promedio: <strong>@question.RatingAverage.Value.ToString("0.##")</strong> / 5
+                        </p>
+                    }
+
+                    <!-- Gráfico: los datos viajan como JSON en atributos data-* y los dibuja Chart.js -->
+                    <div style="@(question.ChartType == "doughnut" ? "max-width: 320px;" : "max-width: 100%;") margin: 0 auto 1rem;">
+                        <canvas class="result-chart"
+                                data-chart-type="@question.ChartType"
+                                data-labels="@question.LabelsJson"
+                                data-values="@question.ValuesJson"></canvas>
+                    </div>
+
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>@(question.Type == QuestionType.Rating ? "Calificación" : "Opción")</th>
+                                <th class="text-end">Respuestas</th>
+                                <th class="text-end">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var option in question.Options)
+                            {
+                                <tr>
+                                    <td>@option.Label</td>
+                                    <td class="text-end">@option.Count</td>
+                                    <td class="text-end">@option.Percentage.ToString("0.#")%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    // Dibuja un gráfico por cada <canvas class="result-chart"> usando los datos de sus atributos data-*
+    (function () {
+        if (typeof Chart === 'undefined') {
+            return;
+        }
+
+        const colors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1',
+                        '#20c997', '#fd7e14', '#0dcaf0', '#6c757d', '#d63384'];
+
+        document.querySelectorAll('.result-chart').forEach(function (canvas) {
+            const labels = JSON.parse(canvas.dataset.labels);
+            const values = JSON.parse(canvas.dataset.values);
+            const chartType = canvas.dataset.chartType;
+
+            const isDoughnut = chartType === 'doughnut';
+            const isHorizontal = chartType === 'bar-horizontal';
+
+            const options = {
+                indexAxis: isHorizontal ? 'y' : 'x',
+                plugins: { legend: { display: isDoughnut } }
+            };
+
+            // En los gráficos de barras, el eje de los valores empieza en 0 y usa números enteros
+            if (!isDoughnut) {
+                const valueAxis = isHorizontal ? 'x' : 'y';
+                options.scales = {};
+                options.scales[valueAxis] = { beginAtZero: true, ticks: { precision: 0 } };
+            }
+
+            new Chart(canvas, {
+                type: isDoughnut ? 'doughnut' : 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: values, backgroundColor: colors }]
+                },
+                options: options
+            });
+        });
+    })();
+</script>

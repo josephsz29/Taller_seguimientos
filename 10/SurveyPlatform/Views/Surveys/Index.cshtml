@@ -1,0 +1,62 @@
+@model List<SurveySummary>
+@{
+    ViewData["Title"] = "Mis encuestas";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Mis encuestas</h2>
+    <a asp-action="Create" class="btn btn-primary">Nueva encuesta</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Todavía no has creado encuestas. <a asp-action="Create">Crea la primera.</a></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Encuesta</th>
+                    <th>Estado</th>
+                    <th class="text-end">Preguntas</th>
+                    <th class="text-end">Respuestas</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Builder" asp-route-id="@item.Survey.Id" class="fw-semibold text-decoration-none">@item.Survey.Title</a>
+                            <div class="small text-muted">Creada el @item.Survey.CreatedAt.ToString("dd/MM/yyyy")</div>
+                        </td>
+                        <td>
+                            @if (item.Survey.IsOpen)
+                            {
+                                <span class="badge text-bg-success">Abierta</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Cerrada</span>
+                            }
+                        </td>
+                        <td class="text-end">@item.QuestionCount</td>
+                        <td class="text-end">@item.ResponseCount</td>
+                        <td class="text-end">
+                            <a asp-action="Builder" asp-route-id="@item.Survey.Id" class="btn btn-sm btn-outline-primary">Preguntas</a>
+                            <a asp-action="Results" asp-route-id="@item.Survey.Id" class="btn btn-sm btn-outline-success">Resultados</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
