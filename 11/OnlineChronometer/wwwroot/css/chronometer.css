@@ -1,0 +1,22 @@
+/* Pantalla del cronómetro */
+.chronometer-display {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: clamp(2.8rem, 13vw, 5.5rem);
+    font-weight: 600;
+    line-height: 1.1;
+    /* Todos los dígitos con el mismo ancho: así el número no "tiembla" mientras corre */
+    font-variant-numeric: tabular-nums;
+}
+
+.chronometer-display.running {
+    color: #198754;
+}
+
+.chronometer-button {
+    min-width: 9.5rem;
+}
+
+.lap-time {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+}

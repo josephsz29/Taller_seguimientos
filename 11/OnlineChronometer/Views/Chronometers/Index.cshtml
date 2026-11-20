@@ -1,0 +1,68 @@
+@model List<ChronometerSummary>
+@{
+    ViewData["Title"] = "Cronómetros";
+}
+
+<h2 class="mb-4">Mis cronómetros</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- Crear un cronómetro nuevo (el nombre es opcional) -->
+<form asp-action="Create" method="post" class="d-flex gap-2 mb-4">
+    <input type="text" name="name" class="form-control" maxlength="60" placeholder="Nombre (opcional)" />
+    <button type="submit" class="btn btn-primary">Nuevo cronómetro</button>
+</form>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Todavía no tienes cronómetros. Crea el primero con el botón de arriba.</p>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var item in Model)
+        {
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.Name</a>
+
+                    @if (item.IsRunning)
+                    {
+                        <span class="badge text-bg-success ms-2">En marcha</span>
+                    }
+                    else if (item.ElapsedMilliseconds > 0)
+                    {
+                        <span class="badge text-bg-warning ms-2">En pausa</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary ms-2">Detenido</span>
+                    }
+
+                    <div class="small text-muted">
+                        <span class="lap-time">@TimeFormatter.Format(item.ElapsedMilliseconds)</span>
+                        · @item.LapCount vuelta(s)
+                        · Creado el @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Abrir</a>
+
+                    <form asp-action="Delete" asp-route-id="@item.Id" method="post"
+                          onsubmit="return confirm('¿Eliminar este cronómetro y sus vueltas?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}

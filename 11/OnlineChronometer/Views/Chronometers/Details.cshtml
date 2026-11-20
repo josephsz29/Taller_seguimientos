@@ -1,0 +1,51 @@
+@model ChronometerDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<a asp-action="Index" class="text-decoration-none">&larr; Mis cronómetros</a>
+
+<h2 class="mt-2 mb-0 text-center">@Model.Name</h2>
+
+<!-- Todo el cronómetro: el JavaScript lee estos atributos data-* para saber a dónde enviar cada orden -->
+<div id="chronometer" class="text-center"
+     data-id="@Model.Id"
+     data-state="@Model.StateJson"
+     data-start-url="@Url.Action("Start", "Chronometers")"
+     data-pause-url="@Url.Action("Pause", "Chronometers")"
+     data-reset-url="@Url.Action("Reset", "Chronometers")"
+     data-lap-url="@Url.Action("Lap", "Chronometers")"
+     data-state-url="@Url.Action("State", "Chronometers")">
+
+    <div id="display" class="chronometer-display my-4">00:00.00</div>
+
+    <div class="d-flex justify-content-center gap-3 mb-3">
+        <button id="secondaryButton" type="button" class="btn btn-outline-secondary btn-lg chronometer-button" disabled>Reiniciar</button>
+        <button id="primaryButton" type="button" class="btn btn-success btn-lg chronometer-button">Iniciar</button>
+    </div>
+
+    <div id="message" class="text-danger small mb-3"></div>
+</div>
+
+<!-- Vueltas (tiempos parciales) -->
+<div id="lapsSection" class="d-none mt-4">
+    <h5>Vueltas</h5>
+
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Vuelta</th>
+                <th class="text-end">Tiempo de vuelta</th>
+                <th class="text-end">Tiempo total</th>
+            </tr>
+        </thead>
+        <tbody id="lapsBody"></tbody>
+    </table>
+
+    <p class="text-muted small">Verde: la vuelta más rápida. Rojo: la más lenta.</p>
+</div>
+
+<!-- Token antiforgery que el JavaScript envía en cada petición -->
+<form id="csrfForm" class="d-none">@Html.AntiForgeryToken()</form>
+
+<script src="~/js/chronometer.js"></script>
